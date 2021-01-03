@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class ThirdPersonMovement : MonoBehaviour
 {
@@ -9,6 +10,12 @@ public class ThirdPersonMovement : MonoBehaviour
     public CharacterController controller;
     public Transform cam;
     public Animator animator;
+    public Transform sword;
+    public Transform target;
+    public Transform swordHand;
+    public float warpDuration;
+
+    public Vector3 swordOrigPos, swordOrigRot;
 
     public enum State
     {
@@ -25,6 +32,8 @@ public class ThirdPersonMovement : MonoBehaviour
     void Start()
     {
         animator = GetComponent<Animator>();
+        swordOrigPos = sword.localPosition;
+        swordOrigRot = sword.localEulerAngles;
         movementState = State.Free;
     }
 
@@ -69,12 +78,31 @@ public class ThirdPersonMovement : MonoBehaviour
 
     void Warp()
     {
-        transform.position += transform.forward * 10;
+        ShowBody(false);
+        transform.DOMove(target.position, warpDuration);
+
+        sword.parent = null;
+        sword.DOMove(target.position, warpDuration / 2);
+        sword.DOLookAt(target.position, .2f);
+    }
+
+    void ShowBody(bool state)
+    {
+        SkinnedMeshRenderer[] skinnedMeshes = GetComponentsInChildren<SkinnedMeshRenderer>();
+        foreach(SkinnedMeshRenderer skin in skinnedMeshes)
+        {
+            skin.enabled = state;
+        }
     }
 
     void FinishWarp()
     {
         movementState = State.Free;
         animator.SetBool("Attacking", false);
+        ShowBody(true);
+
+        sword.parent = swordHand;
+        sword.localPosition = swordOrigPos;
+        sword.localEulerAngles = swordOrigRot;
     }
 }
